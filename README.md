@@ -12,6 +12,12 @@ setup.cmd
 
 推荐使用 `setup.cmd` 作为统一入口。
 
+如果上一级项目已经存在 `.ai-agentic-workflow-meta.json`，`setup.cmd` 会先识别这是一个已受管项目，并比较当前工作流 `VERSION` 与已安装版本：
+
+- 如果当前版本更高，会提示“可升级”，由用户显式选择是否升级
+- 如果版本相同，会提示“当前已是最新，无需升级”
+- 默认都不会自动升级
+
 它会明确要求用户选择：
 
 - `1`：OpenCode
@@ -218,6 +224,10 @@ target-project/
 - `-SkipAdapter`：只初始化运行文档，不安装 OpenCode 适配文件
 - `-Force`：覆盖目标目录中已存在的文件
 
+初始化完成后，还会写入：
+
+- `.ai-agentic-workflow-meta.json`：记录安装版本、适配器类型、受管文件分类与模板哈希，用于后续升级判断
+
 ## Claude Code 适配
 
 如果当前项目把本目录作为子目录引入，例如：
@@ -256,6 +266,10 @@ target-project/
 - `-SkipAdapter`：只初始化运行文档，不安装 Claude Code 适配文件
 - `-Force`：覆盖目标目录中已存在的文件
 
+初始化完成后，还会写入：
+
+- `.ai-agentic-workflow-meta.json`：记录安装版本、适配器类型、受管文件分类与模板哈希，用于后续升级判断
+
 当前提供的是最小可用适配：
 
 - 项目根目录 `CLAUDE.md` 作为主规则入口
@@ -279,6 +293,48 @@ target-project/
 运行 `setup.cmd` 时，初始化流程会询问是否创建 `当前Hooks.md`，以及是否包含默认 Git Hook 模板。
 如果不创建 `当前Hooks.md`，Main Agent 会视为当前项目未启用 Hook，并跳过所有 Hook 相关处理。
 
+## 升级已有项目
+
+当工作流仓库更新后，推荐在工作流目录中执行：
+
+```bat
+setup.cmd upgrade
+```
+
+如果你只是直接运行：
+
+```bat
+setup.cmd
+```
+
+脚本也会先检查上一级项目是否已纳入工作流管理，并比较当前版本与已安装版本：
+
+- 若检测到可升级状态，会先弹出升级选择菜单，但仍然需要用户手动选择“upgrade existing managed project”才会真正执行升级
+- 若检测到当前已经是最新版本，则会先提示“无需升级”，再让用户决定是否继续做初始化操作或直接退出
+
+也可以直接运行：
+
+```powershell
+./scripts/upgrade.ps1
+```
+
+升级机制按文件类型分层处理：
+
+- `system`：框架与适配文件，若目标文件未被用户修改则自动升级
+- `state`：`当前PRD.md`、`当前RoadMap.md`、`当前阶段Kanban.md`、`BUG追踪.md`，默认不覆盖
+- `cache`：`当前状态快照.md`，升级时自动刷新
+- `local-extension`：`当前Hooks.md`，默认保留本地版本，仅在引导模式输出新版参考副本
+
+升级模式：
+
+- `-Mode safe`：保守升级，仅更新安全可替换的文件
+- `-Mode guided`：默认模式，为冲突文件生成 `.workflow-new` 或 `.upgrade-template` 参考副本
+- `-Mode force-system`：强制覆盖 `system` 文件，但仍不覆盖 `state` 文件
+
+升级后会生成：
+
+- `workflow-upgrade-report.md`：本次升级动作与冲突说明
+
 ## setup.cmd 帮助
 
 可以直接运行：
@@ -291,6 +347,7 @@ setup.cmd help
 
 - 支持的适配器
 - 常见透传参数
+- 升级模式参数
 - Hook 初始化选项
 - 初始化后的推荐使用顺序
 

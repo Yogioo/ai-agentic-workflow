@@ -41,55 +41,24 @@ $variables = @{
   "{{TODAY}}" = (Get-Date -Format "yyyy-MM-dd")
 }
 
-$bootstrapTemplateDir = Join-Path $workflowDir "templates/bootstrap"
+$workflowVersion = Get-WorkflowVersion -WorkflowDir $workflowDir
 
 New-DirectoryIfMissing -Path $targetRoot -DryRun $DryRun.IsPresent
+$entries = Get-ManagedEntriesForAdapter -Adapter "opencode" -WorkflowDir $workflowDir -WorkflowDirName $WorkflowDirName -TargetRoot $targetRoot -Variables $variables -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent
 
-if (-not $SkipAdapter) {
-  $opencodeDir = Join-Path $targetRoot ".opencode"
-  $agentTargetDir = Join-Path $opencodeDir "agents"
-  $commandTargetDir = Join-Path $opencodeDir "commands"
-
-  New-DirectoryIfMissing -Path $opencodeDir -DryRun $DryRun.IsPresent
-  New-DirectoryIfMissing -Path $agentTargetDir -DryRun $DryRun.IsPresent
-  New-DirectoryIfMissing -Path $commandTargetDir -DryRun $DryRun.IsPresent
-
-  $config = @{
-    '$schema' = 'https://opencode.ai/config.json'
-    default_agent = 'main-agent'
-    instructions = @(
-      "$WorkflowDirName/framework/总览入口.md",
-      "$WorkflowDirName/framework/文档目录规范.md"
-    )
-  } | ConvertTo-Json -Depth 5
-
-  Write-TextFile -Path (Join-Path $opencodeDir "opencode.json") -Content $config -DryRun $DryRun.IsPresent -Force $Force.IsPresent
-
-  Install-TemplateFiles -DirectEntries @(
-    @{
-      SourcePath = (Join-Path $workflowDir "framework/AGENTS.template.md")
-      DestinationPath = (Join-Path $targetRoot "AGENTS.md")
-    }
-  ) -DirectoryEntries @(
-    @{
-      SourceDir = (Join-Path $workflowDir "agents")
-      DestinationDir = $agentTargetDir
-      Filter = "*.md"
-    },
-    @{
-      SourceDir = (Join-Path $workflowDir "commands")
-      DestinationDir = $commandTargetDir
-      Filter = "*.md"
-    }
-  ) -Variables $variables -DryRun $DryRun.IsPresent -Force $Force.IsPresent
+if ($SkipAdapter) {
+  $entries = @($entries | Where-Object { $_.Category -ne "system" })
+}
+else {
+  foreach ($path in @(
+    (Join-Path $targetRoot ".opencode"),
+    (Join-Path $targetRoot ".opencode/agents"),
+    (Join-Path $targetRoot ".opencode/commands")
+  )) {
+    New-DirectoryIfMissing -Path $path -DryRun $DryRun.IsPresent
+  }
 }
 
-Write-BootstrapDocuments -TargetRoot $targetRoot -TemplateDir $bootstrapTemplateDir -Variables $variables -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent -DryRun $DryRun.IsPresent -Force $Force.IsPresent
-
-$adapterArtifacts = if ($SkipAdapter) {
-  @()
-} else {
-  @("AGENTS.md", ".opencode/opencode.json", ".opencode/agents/*.md", ".opencode/commands/*.md")
-}
-
-Show-InitializationSummary -AdapterName "OpenCode" -TargetRoot $targetRoot -AdapterArtifacts $adapterArtifacts -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent -DryRun $DryRun.IsPresent
+Install-ManagedEntries -Entries $entries -TargetRoot $targetRoot -DryRun $DryRun.IsPresent -Force $Force.IsPresent
+Write-WorkflowMetadata -TargetRoot $targetRoot -WorkflowName $workflowName -InstalledVersion $workflowVersion -WorkflowDirName $WorkflowDirName -ProjectName $ProjectName -Adapter "opencode" -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent -Entries $entries -DryRun $DryRun.IsPresent
+Show-InitializationSummary -AdapterName "OpenCode" -TargetRoot $targetRoot -Entries $entries -DryRun $DryRun.IsPresent

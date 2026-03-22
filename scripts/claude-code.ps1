@@ -49,48 +49,24 @@ $variables = @{
   "{{TODAY}}" = (Get-Date -Format "yyyy-MM-dd")
 }
 
-$bootstrapTemplateDir = Join-Path $workflowDir "templates/bootstrap"
+$workflowVersion = Get-WorkflowVersion -WorkflowDir $workflowDir
 
 New-DirectoryIfMissing -Path $targetRoot -DryRun $DryRun.IsPresent
+$entries = Get-ManagedEntriesForAdapter -Adapter "claude-code" -WorkflowDir $workflowDir -WorkflowDirName $WorkflowDirName -TargetRoot $targetRoot -Variables $variables -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent
 
-if (-not $SkipAdapter) {
-  $claudeDir = Join-Path $targetRoot ".claude"
-  $agentTargetDir = Join-Path $claudeDir "agents"
-  $commandTargetDir = Join-Path $claudeDir "commands"
-
-  New-DirectoryIfMissing -Path $claudeDir -DryRun $DryRun.IsPresent
-  New-DirectoryIfMissing -Path $agentTargetDir -DryRun $DryRun.IsPresent
-  New-DirectoryIfMissing -Path $commandTargetDir -DryRun $DryRun.IsPresent
-
-  Install-TemplateFiles -DirectEntries @(
-    @{
-      SourcePath = (Join-Path $workflowDir "claude/CLAUDE.template.md")
-      DestinationPath = (Join-Path $targetRoot "CLAUDE.md")
-    },
-    @{
-      SourcePath = (Join-Path $workflowDir "claude/settings.template.json")
-      DestinationPath = (Join-Path $claudeDir "settings.json")
-    }
-  ) -DirectoryEntries @(
-    @{
-      SourceDir = (Join-Path $workflowDir "claude/agents")
-      DestinationDir = $agentTargetDir
-      Filter = "*.md"
-    },
-    @{
-      SourceDir = (Join-Path $workflowDir "claude/commands")
-      DestinationDir = $commandTargetDir
-      Filter = "*.md"
-    }
-  ) -Variables $variables -DryRun $DryRun.IsPresent -Force $Force.IsPresent
+if ($SkipAdapter) {
+  $entries = @($entries | Where-Object { $_.Category -ne "system" })
+}
+else {
+  foreach ($path in @(
+    (Join-Path $targetRoot ".claude"),
+    (Join-Path $targetRoot ".claude/agents"),
+    (Join-Path $targetRoot ".claude/commands")
+  )) {
+    New-DirectoryIfMissing -Path $path -DryRun $DryRun.IsPresent
+  }
 }
 
-Write-BootstrapDocuments -TargetRoot $targetRoot -TemplateDir $bootstrapTemplateDir -Variables $variables -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent -DryRun $DryRun.IsPresent -Force $Force.IsPresent
-
-$adapterArtifacts = if ($SkipAdapter) {
-  @()
-} else {
-  @("CLAUDE.md", ".claude/settings.json", ".claude/agents/*.md", ".claude/commands/*.md")
-}
-
-Show-InitializationSummary -AdapterName "Claude Code" -TargetRoot $targetRoot -AdapterArtifacts $adapterArtifacts -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent -DryRun $DryRun.IsPresent
+Install-ManagedEntries -Entries $entries -TargetRoot $targetRoot -DryRun $DryRun.IsPresent -Force $Force.IsPresent
+Write-WorkflowMetadata -TargetRoot $targetRoot -WorkflowName $workflowName -InstalledVersion $workflowVersion -WorkflowDirName $WorkflowDirName -ProjectName $ProjectName -Adapter "claude-code" -IncludeHooks $IncludeHooks.IsPresent -IncludeGitHooks $IncludeGitHooks.IsPresent -Entries $entries -DryRun $DryRun.IsPresent
+Show-InitializationSummary -AdapterName "Claude Code" -TargetRoot $targetRoot -Entries $entries -DryRun $DryRun.IsPresent
