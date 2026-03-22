@@ -1,0 +1,35 @@
+---
+description: 基于当前阶段目标生成或刷新 Kanban 草案
+argument-hint: [phase-or-context]
+disable-model-invocation: true
+---
+请按以下流程执行：
+
+1. 优先读取 `{{WORKFLOW_DIR}}/framework/Kanban任务模板.md`、`{{WORKFLOW_DIR}}/framework/命令体系规范.md`
+2. 若存在 `当前状态快照.md`，优先用它快速理解当前阶段，再结合 `当前RoadMap.md`、`当前PRD.md`、`BUG追踪.md` 做最小必要补充
+3. 输出“当前阶段 Kanban 草案”或“当前阶段 Kanban 更新建议”
+
+请尽量按以下固定结构输出：
+
+## 当前阶段
+- 阶段目标：
+- 当前阶段：
+
+## Kanban 结果
+- 任务列表：
+- 每个任务的执行角色：
+- 验收标准：
+- 路径范围：
+- 是否需要 QA：
+
+## 并发与冲突
+- 并发 / 串行关系：
+- 文件写冲突风险：
+
+## 后续建议
+- 推荐下一步动作：
+- 是否建议更新 `当前状态快照.md`：是 / 否
+
+如果信息不足，不要脑补；明确指出缺口，并给出最小必要补充项。
+
+当前阶段与补充上下文： $ARGUMENTS

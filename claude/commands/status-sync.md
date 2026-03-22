@@ -1,0 +1,35 @@
+---
+description: 根据 Sub Agent 回传结果生成 Kanban 状态更新建议
+argument-hint: [task-result-context]
+disable-model-invocation: true
+---
+请按以下流程执行：
+
+1. 优先读取 `{{WORKFLOW_DIR}}/framework/Kanban任务模板.md`、`{{WORKFLOW_DIR}}/framework/命令体系规范.md`
+2. 若存在 `当前状态快照.md`，先读取以理解当前推进状态
+3. 结合当前对话中的 Sub Agent 回传结果，判断任务状态应如何更新
+4. 输出结构化的 Kanban 状态更新建议
+
+请尽量按以下固定结构输出：
+
+## 当前回传结果
+- 受影响的 Task ID：
+- 回传类型：Dev / QA / 其他
+- 关键结论：
+
+## 状态更新建议
+- 当前建议状态：
+- 更新依据：
+- 是否已通过验收：是 / 否
+
+## 是否可继续推进
+- 是否需要 QA 或重新派单：
+- 下一步建议：
+
+## 快照 / 文档同步建议
+- 是否建议更新 `当前状态快照.md`：是 / 否
+- 是否建议更新 `当前阶段Kanban.md`：是 / 否
+
+如果回传信息不足以支持状态更新，明确指出缺口，不要直接判定为完成。
+
+本次状态同步的补充上下文： $ARGUMENTS
