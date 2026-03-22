@@ -177,9 +177,9 @@ echo   -Mode safe^|guided^|force-system
 echo   -DryRun
 echo.
 echo Interactive hook setup:
-echo   1. Do not create 当前Hooks.md
-echo   2. Create 当前Hooks.md with empty default template
-echo   3. Create 当前Hooks.md with Git hook template
+echo   1. Do not create hooks file
+echo   2. Create hooks file with empty default template
+echo   3. Create hooks file with Git hook template
 echo.
 echo Recommended usage after initialization:
 echo   1. Use start for first-time analysis and planning
@@ -212,15 +212,15 @@ echo.
 
 if not "%~2"=="" goto opencode_run_no_prompt
 
- set "HOOK_ARGS="
- echo Hook setup:
- echo   1. Do not create 当前Hooks.md
- echo   2. Create 当前Hooks.md with empty default template
- echo   3. Create 当前Hooks.md with Git hook template
- choice /c 123 /n /m "Enter choice [1/2/3]: "
- if errorlevel 3 set "HOOK_ARGS=-IncludeHooks -IncludeGitHooks" & goto opencode_run
- if errorlevel 2 set "HOOK_ARGS=-IncludeHooks" & goto opencode_run
- if errorlevel 1 goto opencode_nohooks
+set "HOOK_ARGS="
+echo Hook setup:
+echo   1. Do not create hooks file
+echo   2. Create hooks file with empty default template
+echo   3. Create hooks file with Git hook template
+choice /c 123 /n /m "Enter choice [1/2/3]: "
+if errorlevel 3 set "HOOK_ARGS=-IncludeHooks -IncludeGitHooks" & goto opencode_run
+if errorlevel 2 set "HOOK_ARGS=-IncludeHooks" & goto opencode_run
+if errorlevel 1 goto opencode_nohooks
 
 :opencode_run
 
@@ -247,15 +247,15 @@ echo.
 
 if not "%~2"=="" goto claude_run_no_prompt
 
- set "HOOK_ARGS="
- echo Hook setup:
- echo   1. Do not create 当前Hooks.md
- echo   2. Create 当前Hooks.md with empty default template
- echo   3. Create 当前Hooks.md with Git hook template
- choice /c 123 /n /m "Enter choice [1/2/3]: "
- if errorlevel 3 set "HOOK_ARGS=-IncludeHooks -IncludeGitHooks" & goto claude_run
- if errorlevel 2 set "HOOK_ARGS=-IncludeHooks" & goto claude_run
- if errorlevel 1 goto claude_nohooks
+set "HOOK_ARGS="
+echo Hook setup:
+echo   1. Do not create hooks file
+echo   2. Create hooks file with empty default template
+echo   3. Create hooks file with Git hook template
+choice /c 123 /n /m "Enter choice [1/2/3]: "
+if errorlevel 3 set "HOOK_ARGS=-IncludeHooks -IncludeGitHooks" & goto claude_run
+if errorlevel 2 set "HOOK_ARGS=-IncludeHooks" & goto claude_run
+if errorlevel 1 goto claude_nohooks
 
 :claude_run
 
